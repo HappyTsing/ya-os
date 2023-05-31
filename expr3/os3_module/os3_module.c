@@ -41,16 +41,16 @@ int (*fptr_Operation)(int*,int,int,char*);
 static int os3_init(void)
 {
     //static int (*fptr_ASMD_Operation)(int*,int,int,char*);
-    printk(KERN_ALERT"os3 init...\n");
+    printk(KERN_ALERT"happytsing, os3 init...\n");
     fptr_Operation=&ASMD_Operation;
     return 0;
 }
 static void os3_exit(void)
 {
-    printk(KERN_ALERT"os3 exit...\n");
+    printk(KERN_ALERT"happytsing, os3 exit...\n");
 }
 EXPORT_SYMBOL(fptr_Operation);
 
-module_init(os4_init);
-module_exit(os4_exit);
+module_init(os3_init);
+module_exit(os3_exit);
 

@@ -12,7 +12,7 @@ struct timeval tstart,tend;
 
 static int call_os3_module_init(void)
 {
-    printk("call_os3_module_init...\n");
+    printk("happytsing, call_os3_module_init...\n");
 
     do_gettimeofday(&tstart);
     const int count=25000000;
@@ -43,13 +43,14 @@ static int call_os3_module_init(void)
     }
 
     do_gettimeofday(&tend);
-    printk("total time:%ld millisec\n",1000*(tend.tv_sec-tstart.tv_sec)+(tend.tv_usec-tstart.tv_usec)/1000);
+    // printk("total time:%ld millisec\n",1000*(tend.tv_sec-tstart.tv_sec)+(tend.tv_usec-tstart.tv_usec)/1000);
+    printk("total time:%ld usec\n",1000000*(tend.tv_sec-tstart.tv_sec)+(tend.tv_usec-tstart.tv_usec));
     return 0;
 }
 
 static void call_os3_module_exit(void)
 {
-    printk("call_os3_module_exit...\n");
+    printk("happytsing, call_os3_module_exit...\n");
     return;
 }
 module_init(call_os3_module_init);
