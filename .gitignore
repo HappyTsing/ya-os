@@ -7,3 +7,5 @@
 *.mk
 /.vscode
 *.out
+*tmp*
+*.DS_Store

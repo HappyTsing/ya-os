@@ -34,6 +34,16 @@
 #define KERN_DEBUG    "<7>"    /* debug-level messages */
 ```
 
+**实验测试**
+
+```sh
+make
+sudo insmod hello.ko
+sudo rmmod hello
+make clean
+dmesg
+```
+
 # expr2
 
 **实验内容**
@@ -101,18 +111,20 @@ sudo make install
 > https://blog.csdn.net/weixin_40837318/article/details/123798456
 
 ```sh
-# 查看当前内核 id
+# 查看当前内核 id，切换为 
 grep submenu /boot/grub/grub.cfg
 uname -a
 
 # 查看所有内核 id
 grep gnulinux /boot/grub/grub.cfg
 
-# 切换内核
+# 切换内核，选择 advanced
 sudo vim /etc/default/grub
+GRUB_DEFAULT=0 修改为 =“1 >n” # 从0开始计数，选择第n个内核，默认为第0个。注意：n替换为你想修改的内核编号
 
 # 更新 重启
 sudo update-grub
+reboot
 ```
 
 函数系统调用实现时，采用 `SYSCALL_DEFINE1` 定义，当然还有 `SYSCALL_DEFINE2` 等等，数字表示系统调用的参数个数，第一个参数表示函数名，且 `SYSCALL_DEFINE`  中的 `int, count` 之间存在逗号！
@@ -126,10 +138,8 @@ sudo update-grub
 
 **实验内容**
 
-- 编写一个完成整数四则运算的动态模块
-- 使用insmod和rmmod命令插入、删除模块
-- 在模块初始化函数内，定义全局函数指针变量，令其指向模块运算函数，最后导出全局指针变量到全局符号表
-- 新增一个动态模块，同实验2中的系统功能调用具有相同的接口。该动态模块调用被导出的函数指针，间接调用动态模块中的四则运算函数，完成整数四则运算
+- 编写一个完成整数四则运算的动态模块 os3_module，在模块初始化函数内，定义全局函数指针变量，令其指向模块运算函数，最后导出全局指针变量到全局符号表
+- 编写一个调用模块 call_os3_module，该模块调用被导出的函数指针，间接调用动态模块中的四则运算函数，完成整数四则运算
 - 进行等量四则运算，测试，同实验二的测试结果对比
 
 ---
@@ -158,16 +168,26 @@ sudo update-grub
   - MODULE_ALIAS()
 > init_module()、cleanup_module()和 MODULE_LICENSE()必须的，其它都是根据需要可选择的
 
+**实验测试**
 
-
-```
-# todo 测试执行
-cd expr3
+```sh
 make
-
+sudo insmod os3_module.ko
+make clean
+cd call_os3_module
+make
+sudo insmod call_os3_module_add_time.ko
+make clean
+sudo rmmod call_os3_module_add_time # 必须先删除call_os3_module_add_time，再删除os3_module，否则是无法删除的，会有报错
+sudo rmmod os3_module
+dmesg
 ```
 
 # expr4
+
+> Reference: 
+> - [字符设备驱动开发实验](https://blog.csdn.net/m0_69211839/article/details/130529809)
+> - 实验 4 PPT
 
 **实验内容**
 
@@ -220,3 +240,62 @@ Linux为文件和设备提供了一个一致性的接口，用户操作设备文
 Linux下一切皆是“文件”，字符设备也是这样，file_operations结构体中的成员函数是字符设备程序设计的主题内容，这些函数实际会在用户层程序进行Linux的open()、close()、write()、read()等系统调用时最终被调用
 
 字符设备是3大类设备（字符设备、块设备、网络设备）中较简单的一类设备，其驱动程序中完成的主要工作是初始化、添加和删除cdev结构体，申请和释放设备号，以及填充file_operation结构体中操作函数，并实现file_operations结构体中的read()、write()、ioctl()等重要函数。
+
+**错误修复**
+
+```sh
+module license 'unspecified' taints kernel.
+```
+
+参见: [Linux驱动开发错误：module license 'unspecified' taints kernel.](https://blog.csdn.net/zengxianyang/article/details/50710695)
+
+多个 c 文件编译模块时，`obj-m` 后的模块名不得与 c 文件名相同，实际修改时，随便取一个模块名即可。
+
+
+**实验测试**
+
+1. 编译、加载驱动模块
+
+```sh
+make
+sudo insmod os4_charMsgModule.ko
+```
+
+2. 创建设备节点文件
+
+> 驱动加载成功需要在 /dev 目录下创建一个与之对应的设备节点文件，应用程序就是通过操作这个设备节点文件来完成对具体设备的操作
+
+```sh
+sudo mknod /dev/os4_charMsgDriver c 200 0
+```
+
+- mknod 创建节点命令
+- /dev/os4_charMsgDriver 创建的节点文件
+- “c” 表示这是个字符设备
+- “200” 是设备的主设备号，“0”是设备的次设备号
+
+创建完成以后就会存在 /dev/os4_charMsgDriver 这个文件，可以使用 `ls /dev/os4_charMsgDriver -l` 命令查看
+
+3. 编译、运行测试文件
+
+```sh
+gcc test_os4.c
+sudo sh
+./a.out
+```
+
+该 c 文件会打开文件 /dev/os4_charMsgDriver，并调用我们的内核驱动处理。
+
+4. 查看内核输出
+
+```sh
+dmesg
+```
+
+5. 清理、卸载
+
+```
+make clean
+sudo rmmod os4_charMsgModule
+rm -f /dev/os4_charMsgDriver
+```
